@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Criticare Monitor Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Criticare Anesthesia Monitor</h1>
+    <button id="connectBtn">Connect to Monitor</button>
+  </header>
+
+  <main>
+    <div class="cards">
+      <div class="card">
+        <h3>Time_Frame</h3>
+        <p id="TF">--</p>
+      </div>
+      <div class="card">
+        <h3>HR_BPM</h3>
+        <p id="hr">-- bpm</p>
+      </div>
+      <div class="card">
+        <h3>SpO₂</h3>
+        <p id="spo2">-- %</p>
+      </div>
+      <div class="card">
+        <h3>Respiration Rate</h3>
+        <p id="resp">-- Br/m</p>
+      </div>
+      <div class="card">
+        <h3>Inspired CO₂</h3>
+        <p id="INCO2">-- °C</p>
+      </div>
+      <div class="card">
+        <h3>ET CO₂</h3>
+        <p id="ETCO2">-- °C</p>
+      </div>
+      <div class="card">
+        <h3>NIBP_Systolic</h3>
+        <p id="BPSys">-- mmHg</p>
+      </div>
+      <div class="card">
+        <h3>NIBP_Diastolic</h3>
+        <p id="BPDia">-- mmHg</p>
+      </div>
+      <div class="card">
+        <h3>NIBP_Mean</h3>
+        <p id="BPMean">-- mmHg</p>
+      </div>
+    </div>
+
+    <canvas id="chartHR" height="150"></canvas>
+    <canvas id="chartSpO2" height="150"></canvas>
+  </main>
+
+  <footer>
+    <p>Local Demo | Criticare Monitor</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
