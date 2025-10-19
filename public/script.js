@@ -31,7 +31,7 @@ connectBtn.addEventListener('click', async () => {
 
     const port = await navigator.serial.requestPort();
     await port.open({ baudRate: 38400 });
-
+    await new Promise(r => setTimeout(r, 1000)); // Wait 1 second for device to stabilize
     const decoder = new TextDecoderStream();
     port.readable.pipeTo(decoder.writable);
     const reader = decoder.readable.getReader();
@@ -49,6 +49,10 @@ connectBtn.addEventListener('click', async () => {
       for (let line of lines) {
         if (!line.trim()) continue;
 
+          if (!/^[\x20-\x7E,]+$/.test(line)) {
+        console.warn("Ignoring noise:", line);
+        continue;
+        }
         const data = parseMonitorData(line);
 
         // Update cards
