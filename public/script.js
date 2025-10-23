@@ -7,8 +7,7 @@ const ETCO2Elem = document.getElementById('ETCO2');
 const timeElem = document.getElementById('TF');
 const BPSysElem = document.getElementById('BPSys');
 const BPDiasElem = document.getElementById('BPDia');
-const BPMeanElem = document.getElementById('BPMean')
-
+const BPMeanElem = document.getElementById('BPMean');
 
 const chartHR = new Chart(document.getElementById('chartHR'), {
   type: 'line',
@@ -21,6 +20,19 @@ const chartSpO2 = new Chart(document.getElementById('chartSpO2'), {
   data: { labels: [], datasets: [{ label: 'SpO₂ (%)', data: [], borderColor: 'green', tension: 0.3 }] },
   options: { responsive: true, animation: false, scales: { x: { display: true }, y: { min: 0, max: 100 } } }
 });
+
+// Store last known non-empty readings
+let lastValues = {
+  time: "__",
+  heartRate: "--",
+  spo2: "--",
+  RESP: "--",
+  INCO2: "--",
+  ETCO2: "--",
+  nibpSystolic: "__",
+  nibpDiastolic: "__",
+  nibpMean: "__"
+};
 
 connectBtn.addEventListener('click', async () => {
   try {
@@ -49,28 +61,36 @@ connectBtn.addEventListener('click', async () => {
       for (let line of lines) {
         if (!line.trim()) continue;
 
-          if (!/^[\x20-\x7E,]+$/.test(line)) {
-        console.warn("Ignoring noise:", line);
-        continue;
+        // Ignore noise or corrupted lines
+        if (!/^[\x20-\x7E,]+$/.test(line)) {
+          console.warn("Ignoring noise:", line);
+          continue;
         }
+
         const data = parseMonitorData(line);
 
-        // Update cards
-        hrElem.textContent = data.heartRate || "--";
-        spo2Elem.textContent = data.spo2 || "--";
-        respElem.textContent = data.RESP || "--";
-        INCO2Elem.textContent = data.INCO2 || "--";
-        ETCO2Elem.textContent = data.E2Co2 || "--";
-        timeElem.textContent= data.time || "__";
-        BPSysElem.textContent=data.nibpSystolic || "__";
-        BPDiasElem.textContent=data.nibpDiastolic || "__";
-        BPMeanElem.textContent=data.nibpMean || "__";
-        
-        // Update charts
-        const time = new Date().toLocaleTimeString();
+        // Update last non-empty values
+        for (const key in data) {
+          if (data[key] && data[key].trim() !== "") {
+            lastValues[key] = data[key];
+          }
+        }
 
-        addData(chartHR, time, data.heartRate);
-        addData(chartSpO2, time, data.spo2);
+        // Display on UI (always show last known values)
+        hrElem.textContent = lastValues.heartRate;
+        spo2Elem.textContent = lastValues.spo2;
+        respElem.textContent = lastValues.RESP;
+        INCO2Elem.textContent = lastValues.INCO2;
+        ETCO2Elem.textContent = lastValues.ETCO2;
+        timeElem.textContent = lastValues.time;
+        BPSysElem.textContent = lastValues.nibpSystolic;
+        BPDiasElem.textContent = lastValues.nibpDiastolic;
+        BPMeanElem.textContent = lastValues.nibpMean;
+
+        // Update charts only if new numeric data
+        const time = new Date().toLocaleTimeString();
+        if (data.heartRate && !isNaN(data.heartRate)) addData(chartHR, time, data.heartRate);
+        if (data.spo2 && !isNaN(data.spo2)) addData(chartSpO2, time, data.spo2);
       }
     }
 
@@ -91,11 +111,9 @@ function parseMonitorData(line) {
     nibpSystolic: fields[9] || "",
     nibpDiastolic: fields[10] || "",
     nibpMean: fields[11] || "",
-    E2Co2: fields[12] || "",
-    INCO2: fields[13] || "",
-    INCO2: fields[14] || ""
+    ETCO2: fields[12] || "",
+    INCO2: fields[13] || ""
   };
-
 }
 
 function addData(chart, label, value) {
@@ -108,4 +126,3 @@ function addData(chart, label, value) {
   }
   chart.update('none');
 }
-
