@@ -9,6 +9,7 @@ const BPSysElem = document.getElementById('BPSys');
 const BPDiasElem = document.getElementById('BPDia');
 const BPMeanElem = document.getElementById('BPMean');
 
+
 const chartHR = new Chart(document.getElementById('chartHR'), {
   type: 'line',
   data: { labels: [], datasets: [{ label: 'Heart Rate (bpm)', data: [], borderColor: 'red', tension: 0.3 }] },
@@ -66,15 +67,16 @@ connectBtn.addEventListener('click', async () => {
           console.warn("Ignoring noise:", line);
           continue;
         }
-
+        console.log("Received line:", line);
         const data = parseMonitorData(line);
-
+        await sendToServer(data);
         // Update last non-empty values
         for (const key in data) {
           if (data[key] && data[key].trim() !== "") {
             lastValues[key] = data[key];
           }
         }
+        
 
         // Display on UI (always show last known values)
         hrElem.textContent = lastValues.heartRate;
@@ -125,4 +127,14 @@ function addData(chart, label, value) {
     chart.data.datasets[0].data.shift();
   }
   chart.update('none');
+}
+
+async function sendToServer(data){
+  const response = await fetch('/data', {
+    method: 'POST',
+    headers: {  'Content-Type': 'application/json'  },
+    body: JSON.stringify(data)
+  })
+  const result = await response.json();
+  console.log("Server response:", result);
 }
