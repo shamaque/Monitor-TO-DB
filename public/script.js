@@ -107,6 +107,16 @@ connectBtn.addEventListener('click', async () => {
     console.error(err);
     alert(`Error: ${err.message}`);
   }
+
+  // Clear old session data before starting new session
+await fetch("http://localhost:4000/resetData", { method: "POST" })
+  .then(res => res.json())
+  .then(d => console.log("Reset API response:", d))
+  .catch(err => console.error("Reset failed:", err));
+
+
+
+
 });
 
 
@@ -129,10 +139,9 @@ disconnectBtn.addEventListener('click', async () => {
   }
 });
 
+try{
 
-
-
-function parseMonitorData(line) {
+  function parseMonitorData(line) {
   const fields = line.trim().split(',');
   return {
     time: fields[0] || "",
@@ -148,6 +157,14 @@ function parseMonitorData(line) {
   };
 }
 
+}catch(err){
+
+  alert(`Error Parsing Machine Data: ${err.message}`);
+}
+
+
+
+
 function addData(chart, label, value) {
   if (!value) return;
   chart.data.labels.push(label);
@@ -159,6 +176,7 @@ function addData(chart, label, value) {
   chart.update('none');
 }
 
+
 async function sendToServer(data){
   const response = await fetch('/data', {
     method: 'POST',
@@ -168,3 +186,7 @@ async function sendToServer(data){
   const result = await response.json();
   console.log("Server response:", result);
 }
+
+
+
+

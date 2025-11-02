@@ -30,6 +30,12 @@ app.get("/report/data", (req, res) => {
   res.json(deviceData);
 });
 
+app.post("/resetData", (req, res) => {
+  deviceData = [];
+  console.log("🔄 Machine data reset successfully");
+  res.json({ status: "cleared" });
+});
+
 // Download data as JSON
 // app.get("/export/json", (req, res) => {
 //   res.setHeader('Content-Disposition', 'attachment; filename="machine_data.json"');
