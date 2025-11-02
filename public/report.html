@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Machine Data Report</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
+    th { background-color: #f2f2f2; }
+    button { margin-top: 15px; padding: 8px 16px; }
+  </style>
+</head>
+<body>
+  <h2>📊 Machine Data Report</h2>
+  <table id="dataTable">
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Heart Rate</th>
+        <th>ECG</th>
+        <th>SPO2</th>
+        <th>RESP</th>
+        <th>SYS</th>
+        <th>DIA</th>
+        <th>MEAN</th>
+        <th>ETCO2</th>
+        <th>INCO2</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <button onclick="generatePDF()">Download PDF</button>
+
+  <script>
+    async function loadData() {
+      const res = await fetch('/report/data');
+      const data = await res.json();
+      const tbody = document.querySelector('#dataTable tbody');
+      tbody.innerHTML = '';
+      data.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.time || ''}</td>
+          <td>${row.heartRate || ''}</td>
+          <td>${row.ecgStatus || ''}</td>
+          <td>${row.spo2 || ''}</td>
+          <td>${row.RESP || ''}</td>
+          <td>${row.nibpSystolic || ''}</td>
+          <td>${row.nibpDiastolic || ''}</td>
+          <td>${row.nibpMean || ''}</td>
+          <td>${row.ETCO2 || ''}</td>
+          <td>${row.INCO2 || ''}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function generatePDF() {
+      const res = await fetch('/report/data');
+      const data = await res.json();
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      const columns = ["Time", "HR", "ECG", "SPO2", "RESP", "SYS", "DIA", "MEAN", "ETCO2", "INCO2"];
+      const rows = data.map(row => [
+        row.time || "",
+        row.heartRate || "",
+        row.ecgStatus || "",
+        row.spo2 || "",
+        row.RESP || "",
+        row.nibpSystolic || "",
+        row.nibpDiastolic || "",
+        row.nibpMean || "",
+        row.ETCO2 || "",
+        row.INCO2 || ""
+      ]);
+
+      doc.text("Machine Data Report", 14, 10);
+      doc.autoTable({ head: [columns], body: rows, startY: 20 });
+      doc.save("machine_data_report.pdf");
+    }
+
+    loadData();
+    setInterval(loadData, 5000);
+  </script>
+</body>
+</html>
