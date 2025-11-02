@@ -8,6 +8,7 @@ const timeElem = document.getElementById('TF');
 const BPSysElem = document.getElementById('BPSys');
 const BPDiasElem = document.getElementById('BPDia');
 const BPMeanElem = document.getElementById('BPMean');
+const disconnectBtn = document.getElementById('disconnectBtn');
 
 
 const chartHR = new Chart(document.getElementById('chartHR'), {
@@ -35,6 +36,11 @@ let lastValues = {
   nibpMean: "__"
 };
 
+let port;
+let reader;
+let inputDone;
+let inputStream;
+
 connectBtn.addEventListener('click', async () => {
   try {
     if (!('serial' in navigator)) {
@@ -42,12 +48,13 @@ connectBtn.addEventListener('click', async () => {
       return;
     }
 
-    const port = await navigator.serial.requestPort();
+    port = await navigator.serial.requestPort();
     await port.open({ baudRate: 38400 });
     await new Promise(r => setTimeout(r, 1000)); // Wait 1 second for device to stabilize
     const decoder = new TextDecoderStream();
-    port.readable.pipeTo(decoder.writable);
-    const reader = decoder.readable.getReader();
+    inputDone = port.readable.pipeTo(decoder.writable);
+    inputStream = decoder.readable;
+    reader = inputStream.getReader();
 
     let buffer = "";
 
@@ -101,6 +108,29 @@ connectBtn.addEventListener('click', async () => {
     alert(`Error: ${err.message}`);
   }
 });
+
+
+disconnectBtn.addEventListener('click', async () => {
+  try {
+    if (reader) {
+      await reader.cancel();
+      reader.releaseLock();
+    }
+    if (inputDone) {
+      await inputDone.catch(() => {});
+    }
+    if (port) {
+      await port.close();
+      port = null;
+      alert('Disconnected from the monitor.');
+    }
+  } catch (err) {
+    console.error('Error while disconnecting:', err);
+  }
+});
+
+
+
 
 function parseMonitorData(line) {
   const fields = line.trim().split(',');
