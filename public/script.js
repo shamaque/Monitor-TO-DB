@@ -9,6 +9,8 @@ const BPSysElem = document.getElementById('BPSys');
 const BPDiasElem = document.getElementById('BPDia');
 const BPMeanElem = document.getElementById('BPMean');
 const disconnectBtn = document.getElementById('disconnectBtn');
+const startProcedureBtn = document.getElementById('startprocedure');
+const stopProcedureBtn = document.getElementById('stopprocedure');
 
 
 const chartHR = new Chart(document.getElementById('chartHR'), {
@@ -40,6 +42,7 @@ let port;
 let reader;
 let inputDone;
 let inputStream;
+let isProcedureRunning = false;
 
 connectBtn.addEventListener('click', async () => {
   try {
@@ -76,15 +79,14 @@ connectBtn.addEventListener('click', async () => {
         }
         console.log("Received line:", line);
         const data = parseMonitorData(line);
-        await sendToServer(data);
+
         // Update last non-empty values
         for (const key in data) {
           if (data[key] && data[key].trim() !== "") {
             lastValues[key] = data[key];
           }
         }
-        
-
+      
         // Display on UI (always show last known values)
         hrElem.textContent = lastValues.heartRate;
         spo2Elem.textContent = lastValues.spo2;
@@ -100,6 +102,13 @@ connectBtn.addEventListener('click', async () => {
         const time = new Date().toLocaleTimeString();
         if (data.heartRate && !isNaN(data.heartRate)) addData(chartHR, time, data.heartRate);
         if (data.spo2 && !isNaN(data.spo2)) addData(chartSpO2, time, data.spo2);
+
+//Strat Procedure Button
+
+        if (isProcedureRunning) {
+          await sendToServer(lastValues);
+        }
+
       }
     }
 
@@ -109,12 +118,10 @@ connectBtn.addEventListener('click', async () => {
   }
 
   // Clear old session data before starting new session
-await fetch("http://localhost:4000/resetData", { method: "POST" })
+await fetch("/resetData", { method: "POST" })
   .then(res => res.json())
   .then(d => console.log("Reset API response:", d))
   .catch(err => console.error("Reset failed:", err));
-
-
 
 
 });
@@ -176,17 +183,45 @@ function addData(chart, label, value) {
   chart.update('none');
 }
 
+//   async function sendToServer(data){
+//   const response = await fetch('/data', {
+//     method: 'POST',
+//     headers: {  'Content-Type': 'application/json'  },
+//     body: JSON.stringify(data)
+//   })
+//   const result = await response.json();
+//   console.log("Server response:", result);
+// }
 
-async function sendToServer(data){
-  const response = await fetch('/data', {
-    method: 'POST',
-    headers: {  'Content-Type': 'application/json'  },
-    body: JSON.stringify(data)
-  })
-  const result = await response.json();
-  console.log("Server response:", result);
+
+async function sendToServer(data) {
+  try {
+    const response = await fetch('/data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    const result = await response.json();
+    console.log("✅ Data sent:", result);
+  } catch (err) {
+    console.error("❌ Error sending data:", err);
+  }
 }
 
+// ▶️ Start Procedure
+startProcedureBtn.addEventListener('click', async () => {
+  if (isProcedureRunning) return;
+  isProcedureRunning = true;
+  console.log("▶️ Procedure Started");
+  alert("Procedure Started: Data will now be sent to the server.");
+});
 
+// ⏹️ Stop Procedure
+stopProcedureBtn.addEventListener('click', async () => {
+  if (!isProcedureRunning) return;
+  isProcedureRunning = false;
+  console.log("⏹️ Procedure Stopped");
+  alert("Procedure Stopped: Data transmission paused.");
+});
 
 
